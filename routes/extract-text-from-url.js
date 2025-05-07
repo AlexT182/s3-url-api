@@ -1,4 +1,3 @@
-console.log("📥 Extracting file:", fileName, url);
 const express = require("express");
 const fetch = require("node-fetch");
 const fs = require("fs-extra");
@@ -15,6 +14,7 @@ router.post("/extract-text-from-url", async (req, res) => {
     return res.status(400).json({ error: "Missing url or fileName" });
   }
 
+  console.log("📥 Extracting file:", fileName, url);
   const ext = fileName.split('.').pop().toLowerCase();
 
   try {
@@ -36,6 +36,8 @@ router.post("/extract-text-from-url", async (req, res) => {
     } else if (ext === "docx") {
       const result = await mammoth.extractRawText({ path: tmpFile.path });
       text = result.value;
+    } else if (ext === "txt") {
+      text = await fs.readFile(tmpFile.path, "utf8");
     } else if (ext === "doc") {
       return res.status(400).json({
         error: ".doc định dạng cũ không được hỗ trợ. Vui lòng chuyển sang .docx hoặc .pdf."
@@ -47,7 +49,7 @@ router.post("/extract-text-from-url", async (req, res) => {
     res.json({ text });
   } catch (err) {
     console.error("❌ Error extracting text:", err);
-    res.status(500).json({ error: "Failed to extract text" });
+    res.status(500).json({ error: "Failed to extract text", detail: err.message });
   }
 });
 
