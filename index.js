@@ -10,14 +10,14 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// SDK v2: dùng cho PUT (upload)
+// S3 v2 - dùng cho PUT (upload)
 const s3v2 = new AWSv2.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION
 });
 
-// SDK v3: dùng cho GET (download)
+// S3 v3 - dùng cho GET (download)
 const s3v3 = new S3Client({
   region: process.env.AWS_REGION,
   credentials: {
@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
   res.send("✅ S3 URL API running...");
 });
 
-// Endpoint tạo presigned PUT URL
+// Tạo presigned URL cho upload
 app.post("/generate-s3-url", (req, res) => {
   const { s3_key, contentType } = req.body;
 
@@ -50,7 +50,7 @@ app.post("/generate-s3-url", (req, res) => {
   res.json({ upload_url, s3_key });
 });
 
-// Endpoint tạo presigned GET URL
+// Tạo presigned URL cho download
 app.get("/generate-presigned-url", async (req, res) => {
   const { s3_key } = req.query;
   if (!s3_key) return res.status(400).json({ error: "Missing s3_key" });
@@ -73,9 +73,12 @@ app.get("/generate-presigned-url", async (req, res) => {
   }
 });
 
-// Thêm route mới để xử lý extract text
+// Kết nối các route mở rộng
 const extractTextRoute = require("./routes/extract-text-from-url");
+const transcribeAudioRoute = require("./routes/transcribe-audio-from-url");
+
 app.use(extractTextRoute);
+app.use(transcribeAudioRoute);
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
